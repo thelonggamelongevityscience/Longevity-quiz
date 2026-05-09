@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biological Age Quiz — The Long Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #07090F;
+    --bg2:      #0D1017;
+    --bg3:      #13171F;
+    --green:    #00D47E;
+    --green-lo: rgba(0,212,126,0.10);
+    --gold:     #C8923A;
+    --gold-lo:  rgba(200,146,58,0.12);
+    --red:      #D44A4A;
+    --red-lo:   rgba(212,74,74,0.10);
+    --paper:    #E8E2D6;
+    --muted:    rgba(232,226,214,0.45);
+    --rule:     rgba(232,226,214,0.08);
+    --serif:    'Playfair Display', Georgia, serif;
+    --mono:     'DM Mono', 'Courier New', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--paper);
+    font-family: var(--mono);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 32px 16px 64px;
+    line-height: 1.6;
+  }
+
+  /* subtle grid bg */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(var(--rule) 1px, transparent 1px),
+      linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  /* ambient glow */
+  body::after {
+    content: '';
+    position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+    width: 700px; height: 400px; pointer-events: none; z-index: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(0,212,126,0.05) 0%, transparent 70%);
+  }
+
+  .shell {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 620px;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; }
+  .screen.active { display: block; animation: rise 0.45s cubic-bezier(.22,.68,0,1.2) both; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── INTRO ── */
+  .brand-tag {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 10px; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--green); margin-bottom: 28px;
+  }
+  .brand-tag::before { content:''; width:24px; height:1px; background:var(--green); }
+
+  .intro-title {
+    font-family: var(--serif);
+    font-size: clamp(36px, 7vw, 58px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    margin-bottom: 10px;
+  }
+  .intro-title em { color: var(--green); font-style: italic; }
+
+  .intro-sub {
+    font-size: 12px; color: var(--muted);
+    max-width: 460px; line-height: 1.75; margin-bottom: 36px;
+  }
+
+  .stats-row {
+    display: flex; gap: 28px; margin-bottom: 40px;
+    padding: 20px 24px;
+    background: var(--bg2); border: 1px solid var(--rule);
+  }
+  .stat-item { text-align: center; }
+  .stat-num {
+    display: block;
+    font-family: var(--serif); font-size: 30px; font-weight: 900;
+    color: var(--green); line-height: 1;
+  }
+  .stat-lbl {
+    display: block;
+    font-size: 9px; letter-spacing: .15em; text-transform: uppercase;
+    color: rgba(232,226,214,.3); margin-top: 5px;
+  }
+
+  /* ── PROGRESS ── */
+  .progress-wrap { margin-bottom: 28px; }
+  .progress-top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .progress-cat {
+    font-size: 9px; letter-spacing: .25em; text-transform: uppercase; color: var(--green);
+  }
+  .progress-num { font-size: 11px; color: rgba(232,226,214,.3); }
+  .progress-track {
+    height: 3px; background: rgba(232,226,214,.06); border-radius: 2px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: var(--green); border-radius: 2px;
+    transition: width .5s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── QUESTION ── */
+  .q-icon { font-size: 28px; opacity: .3; margin-bottom: 16px; display: block; }
+  .q-text {
+    font-family: var(--serif);
+    font-size: clamp(18px, 3vw, 24px);
+    font-weight: 700; line-height: 1.3;
+    margin-bottom: 8px;
+  }
+  .q-sub {
+    font-size: 11px; color: var(--muted); line-height: 1.7;
+    margin-bottom: 26px;
+    padding: 12px 14px;
+    background: var(--green-lo);
+    border-left: 2px solid var(--green);
+  }
+
+  /* ── OPTIONS ── */
+  .options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px; }
+
+  .opt {
+    display: flex; align-items: center; gap: 14px;
+    padding: 13px 18px;
+    background: var(--bg2); border: 1px solid var(--rule);
+    cursor: pointer; font-family: var(--mono); font-size: 13px; color: var(--muted);
+    transition: border-color .18s, background .18s, color .18s, transform .15s;
+    text-align: left; width: 100%;
+  }
+  .opt:hover {
+    border-color: rgba(0,212,126,.35);
+    background: var(--green-lo);
+    color: var(--paper);
+    transform: translateX(5px);
+  }
+  .opt.chosen {
+    border-color: var(--green);
+    background: var(--green-lo);
+    color: var(--green);
+  }
+  .opt-emoji { font-size: 18px; flex-shrink: 0; }
+  .opt-check { margin-left: auto; color: var(--green); font-size: 15px; flex-shrink: 0; }
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    background: var(--green); color: var(--bg);
+    border: none; padding: 15px 36px;
+    font-family: var(--mono); font-size: 12px; font-weight: 500;
+    letter-spacing: .12em; text-transform: uppercase;
+    cursor: pointer; transition: background .2s, transform .15s, box-shadow .2s;
+    display: inline-block;
+  }
+  .btn-primary:hover {
+    background: #00FFAA;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(0,212,126,.28);
+  }
+  .btn-primary:disabled { opacity: .3; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-ghost {
+    background: transparent; border: 1px solid var(--rule);
+    color: rgba(232,226,214,.35); padding: 10px 24px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+    cursor: pointer; transition: border-color .2s, color .2s; text-transform: uppercase;
+  }
+  .btn-ghost:hover { border-color: rgba(232,226,214,.2); color: rgba(232,226,214,.6); }
+
+  /* ── CALCULATING ── */
+  .calc-center { text-align: center; padding: 60px 0; }
+  .spinner {
+    width: 64px; height: 64px; border-radius: 50%;
+    border: 2px solid rgba(0,212,126,.15);
+    border-top-color: var(--green);
+    animation: spin 1s linear infinite;
+    margin: 0 auto 32px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .calc-title {
+    font-family: var(--serif); font-size: 22px; font-weight: 700;
+    color: var(--green); margin-bottom: 10px;
+  }
+  .calc-msg { font-size: 12px; color: var(--muted); min-height: 20px; }
+  .calc-dots { display: flex; gap: 8px; justify-content: center; margin-top: 32px; }
+  .calc-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: rgba(232,226,214,.1);
+    transition: background .3s;
+  }
+  .calc-dot.lit { background: var(--green); }
+
+  /* ── RESULT ── */
+  .result-badge {
+    display: inline-block;
+    border: 1px solid currentColor;
+    padding: 4px 14px; font-size: 9px;
+    letter-spacing: .22em; text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+
+  .score-ring-wrap { display: flex; justify-content: center; margin-bottom: 28px; }
+  .score-ring {
+    position: relative;
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    border: 2px solid var(--result-color, var(--green));
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: var(--bg2);
+    box-shadow: 0 0 40px var(--result-glow, rgba(0,212,126,.2));
+  }
+  .score-num {
+    font-family: var(--serif); font-size: 52px; font-weight: 900;
+    color: var(--result-color, var(--green)); line-height: 1;
+  }
+  .score-lbl { font-size: 9px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; }
+
+  .result-title {
+    font-family: var(--serif); font-size: clamp(22px, 4vw, 30px);
+    font-weight: 900; margin-bottom: 6px; text-align: center;
+  }
+  .result-rate { font-size: 12px; margin-bottom: 14px; text-align: center; }
+  .result-tagline { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 10px; }
+  .result-desc {
+    font-size: 12px; color: var(--muted); line-height: 1.75;
+    padding: 16px 20px; background: var(--bg2); border: 1px solid var(--rule);
+    margin-bottom: 28px;
+  }
+
+  /* score bar */
+  .score-bar-wrap { margin-bottom: 28px; }
+  .score-bar-labels {
+    display: flex; justify-content: space-between;
+    font-size: 9px; color: rgba(232,226,214,.3);
+    letter-spacing: .1em; margin-bottom: 8px;
+  }
+  .score-bar-track {
+    height: 6px; background: rgba(232,226,214,.06); border-radius: 3px; overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, var(--green), var(--gold), var(--red));
+    transition: width 1.2s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* steps */
+  .steps-label {
+    font-size: 9px; letter-spacing: .25em; text-transform: uppercase;
+    color: rgba(232,226,214,.3); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .steps-label::after { content:''; flex:1; height:1px; background: var(--rule); }
+
+  .step-card {
+    border: 1px solid var(--rule); background: var(--bg2);
+    padding: 18px 20px; margin-bottom: 10px;
+    transition: border-color .2s;
+  }
+  .step-card:hover { border-color: rgba(232,226,214,.16); }
+
+  .step-top { display: flex; gap: 14px; align-items: flex-start; }
+  .step-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+  .step-body { flex: 1; }
+  .step-meta {
+    display: flex; gap: 10px; align-items: center; margin-bottom: 7px;
+  }
+  .step-num { font-size: 9px; letter-spacing: .15em; color: var(--result-color, var(--green)); }
+  .step-title { font-family: var(--serif); font-size: 15px; font-weight: 700; }
+  .step-detail { font-size: 11px; color: var(--muted); line-height: 1.7; }
+
+  /* breakdown */
+  .breakdown-label {
+    font-size: 9px; letter-spacing: .25em; text-transform: uppercase;
+    color: rgba(232,226,214,.3); margin: 24px 0 12px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .breakdown-label::after { content:''; flex:1; height:1px; background: var(--rule); }
+
+  .breakdown-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px;
+    margin-bottom: 28px;
+  }
+  .breakdown-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10px; color: rgba(232,226,214,.4); padding: 4px 0;
+    border-bottom: 1px solid rgba(232,226,214,.04);
+  }
+  .breakdown-pip { display: flex; gap: 2px; }
+  .pip { width: 8px; height: 8px; border-radius: 1px; }
+
+  /* cta block */
+  .cta-block {
+    text-align: center; padding: 28px 24px;
+    border: 1px solid rgba(0,212,126,.2);
+    background: var(--green-lo); margin-bottom: 24px;
+  }
+  .cta-title { font-family: var(--serif); font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+  .cta-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+
+  /* footer */
+  .page-footer {
+    text-align: center; margin-top: 40px;
+    font-size: 10px; color: rgba(232,226,214,.2);
+    line-height: 1.8; letter-spacing: .04em;
+  }
+  .page-footer strong { color: var(--green); }
+
+  /* ── util ── */
+  .hidden { display: none !important; }
+  .text-green { color: var(--green); }
+  .mt16 { margin-top: 16px; }
+  .mt24 { margin-top: 24px; }
+  .center { text-align: center; }
+
+  @media (max-width: 480px) {
+    body { padding: 20px 12px 48px; }
+    .stats-row { gap: 16px; padding: 16px; }
+    .breakdown-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ══════════ INTRO ══════════ -->
+  <div id="screen-intro" class="screen active">
+    <div class="brand-tag">The Long Game · Free Assessment</div>
+
+    <h1 class="intro-title">
+      How Fast Is Your<br>Body <em>Really</em> Aging?
+    </h1>
+    <p class="intro-sub">
+      Your birthday is just a number. Your biological age determines how long
+      you'll actually stay healthy. 10 science-backed questions reveal your
+      true aging rate — and exactly what to do about it.
+    </p>
+
+    <div class="stats-row">
+      <div class="stat-item">
+        <span class="stat-num">10</span>
+        <span class="stat-lbl">Questions</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">2</span>
+        <span class="stat-lbl">Minutes</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">4</span>
+        <span class="stat-lbl">Result Tiers</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">Free</span>
+        <span class="stat-lbl">Always</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="startQuiz()">Begin Assessment →</button>
+
+    <p style="margin-top:18px; font-size:10px; color:rgba(232,226,214,.25); letter-spacing:.05em;">
+      Based on research from Attia, Sinclair &amp; peer-reviewed longevity studies
+    </p>
+  </div>
+
+  <!-- ══════════ QUIZ ══════════ -->
+  <div id="screen-quiz" class="screen">
+    <div class="progress-wrap">
+      <div class="progress-top">
+        <span class="progress-cat" id="q-category">SLEEP</span>
+        <span class="progress-num" id="q-counter">1 / 10</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <span class="q-icon" id="q-icon">◑</span>
+    <h2 class="q-text" id="q-text">Question text</h2>
+    <div class="q-sub" id="q-sub">Science context</div>
+
+    <div class="options" id="options-list"></div>
+
+    <button class="btn-primary" id="btn-next" onclick="nextQuestion()" disabled>
+      Next →
+    </button>
+  </div>
+
+  <!-- ══════════ CALCULATING ══════════ -->
+  <div id="screen-calc" class="screen">
+    <div class="calc-center">
+      <div class="spinner"></div>
+      <div class="calc-title">Analyzing Your Biology</div>
+      <div class="calc-msg" id="calc-msg">Processing your inputs…</div>
+      <div class="calc-dots" id="calc-dots">
+        <div class="calc-dot" id="dot-0"></div>
+        <div class="calc-dot" id="dot-1"></div>
+        <div class="calc-dot" id="dot-2"></div>
+        <div class="calc-dot" id="dot-3"></div>
+        <div class="calc-dot" id="dot-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ RESULT ══════════ -->
+  <div id="screen-result" class="screen">
+    <div id="result-badge" class="result-badge center" style="display:block;"></div>
+
+    <div class="score-ring-wrap">
+      <div class="score-ring" id="score-ring">
+        <span class="score-num" id="score-num">0</span>
+        <span class="score-lbl">Aging Score</span>
+      </div>
+    </div>
+
+    <h2 class="result-title" id="result-title"></h2>
+    <div class="result-rate text-green" id="result-rate"></div>
+    <div class="result-tagline" id="result-tagline"></div>
+    <div class="result-desc" id="result-desc"></div>
+
+    <div class="score-bar-wrap">
+      <div class="score-bar-labels">
+        <span>Optimal (0)</span><span>Critical (60+)</span>
+      </div>
+      <div class="score-bar-track">
+        <div class="score-bar-fill" id="score-bar-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="steps-label">Your 3 Immediate Action Steps</div>
+    <div id="steps-container"></div>
+
+    <div class="breakdown-label">Score Breakdown By Category</div>
+    <div class="breakdown-grid" id="breakdown-grid"></div>
+
+    <div class="cta-block">
+      <div class="cta-title">Ready to reverse your biological age?</div>
+      <div class="cta-sub">
+        The Long Game Blueprint is a complete, science-backed system for
+        regular people who want to age better — without expensive protocols.
+      </div>
+      <button class="btn-primary">Get The Blueprint →</button>
+    </div>
+
+    <div class="center mt16">
+      <button class="btn-ghost" onclick="restartQuiz()">Retake the assessment</button>
+    </div>
+
+    <div class="page-footer">
+      <strong>The Long Game</strong> · Educational content only · Not medical advice<br>
+      Based on peer-reviewed longevity research · Share freely
+    </div>
+  </div>
+
+</div><!-- /shell -->
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+
+var questions = [
+  {
+    category: "SLEEP DURATION", icon: "◑",
+    text: "How many hours of sleep do you get on most nights?",
+    sub: "Sleep is when cells repair, memory consolidates, and the brain clears toxic waste. Chronic short sleep is one of the most powerful biological aging accelerants.",
+    options: [
+      { label:"8–9 hours", emoji:"😴", score:0 },
+      { label:"7–8 hours", emoji:"🌙", score:1 },
+      { label:"6–7 hours", emoji:"😑", score:3 },
+      { label:"5–6 hours", emoji:"😮‍💨", score:6 },
+      { label:"Less than 5 hours", emoji:"🚨", score:10 }
+    ]
+  },
+  {
+    category: "MOVEMENT", icon: "⚡",
+    text: "How often do you do intentional exercise per week?",
+    sub: "VO2 max — your cardiovascular fitness — is the single strongest predictor of all-cause mortality known to science. It is almost entirely determined by how much you move.",
+    options: [
+      { label:"5+ times (cardio + strength)", emoji:"💪", score:0 },
+      { label:"3–4 times per week", emoji:"🏃", score:2 },
+      { label:"1–2 times per week", emoji:"🚶", score:5 },
+      { label:"Occasionally, less than weekly", emoji:"🛋️", score:7 },
+      { label:"Rarely or never", emoji:"🚨", score:10 }
+    ]
+  },
+  {
+    category: "NUTRITION", icon: "◈",
+    text: "How would you honestly describe your daily diet?",
+    sub: "Chronic inflammation driven by ultra-processed food is the root mechanism behind most aging-related disease. What you eat daily is quietly accelerating or decelerating your biological clock.",
+    options: [
+      { label:"Mostly whole foods, minimal processing", emoji:"🥦", score:0 },
+      { label:"Fairly balanced, some processed food", emoji:"🥗", score:2 },
+      { label:"About half processed, half whole food", emoji:"🍔", score:5 },
+      { label:"Mostly fast food or convenience meals", emoji:"🍟", score:7 },
+      { label:"Highly processed, rarely cook at home", emoji:"🚨", score:10 }
+    ]
+  },
+  {
+    category: "STRESS", icon: "◎",
+    text: "How often do you feel chronically stressed or overwhelmed?",
+    sub: "Chronic stress physically shortens telomeres — the protective caps on your DNA — directly accelerating biological aging at the cellular level.",
+    options: [
+      { label:"Rarely — I feel calm and in control", emoji:"🧘", score:0 },
+      { label:"Occasionally — manageable levels", emoji:"😌", score:2 },
+      { label:"Often — most days feel stressful", emoji:"😤", score:5 },
+      { label:"Almost daily — high background anxiety", emoji:"😰", score:7 },
+      { label:"Constantly — feel overwhelmed most of the time", emoji:"🚨", score:10 }
+    ]
+  },
+  {
+    category: "SMOKING", icon: "◉",
+    text: "What is your smoking status?",
+    sub: "Smoking accelerates biological aging by up to 7.4 years according to epigenetic clock data. Even social smoking has measurable cellular impact.",
+    options: [
+      { label:"Never smoked", emoji:"✨", score:0 },
+      { label:"Quit more than 5 years ago", emoji:"🌱", score:1 },
+      { label:"Quit 1–5 years ago", emoji:"🔄", score:3 },
+      { label:"Occasional or social smoker", emoji:"⚠️", score:6 },
+      { label:"Daily smoker", emoji:"🚨", score:10 }
+    ]
+  },
+  {
+    category: "ALCOHOL", icon: "◐",
+    text: "How much alcohol do you consume per week?",
+    sub: "There is no safe level of alcohol for biological aging. Even moderate intake accelerates cellular damage, disrupts sleep architecture, and elevates inflammatory markers.",
+    options: [
+      { label:"None", emoji:"💧", score:0 },
+      { label:"1–3 drinks per week", emoji:"🍷", score:2 },
+      { label:"4–7 drinks per week", emoji:"🍺", score:5 },
+      { label:"8–14 drinks per week", emoji:"⚠️", score:7 },
+      { label:"15+ drinks per week", emoji:"🚨", score:10 }
+    ]
+  },
+  {
+    category: "SEDENTARY TIME", icon: "▣",
+    text: "How many hours per day do you spend sitting or sedentary?",
+    sub: "Sitting 8+ hours daily increases all-cause mortality risk independently of how much you exercise. Sedentary time and exercise time are separate variables — both matter.",
+    options: [
+      { label:"Less than 4 hours", emoji:"🏃", score:0 },
+      { label:"4–6 hours", emoji:"🧍", score:2 },
+      { label:"6–8 hours", emoji:"💺", score:4 },
+      { label:"8–10 hours", emoji:"⚠️", score:7 },
+      { label:"10+ hours (desk job / sedentary lifestyle)", emoji:"🚨", score:10 }
+    ]
+  },
+  {
+    category: "SLEEP QUALITY", icon: "◑",
+    text: "How would you rate the quality of your sleep?",
+    sub: "Deep sleep triggers growth hormone release and activates cellular repair. Poor quality sleep ages you even if you're hitting 8 hours of total duration.",
+    options: [
+      { label:"Excellent — wake up refreshed daily", emoji:"⭐", score:0 },
+      { label:"Good — mostly restful", emoji:"😊", score:2 },
+      { label:"Fair — some disruptions", emoji:"😑", score:4 },
+      { label:"Poor — often wake up tired", emoji:"😫", score:7 },
+      { label:"Very poor — chronic insomnia", emoji:"🚨", score:10 }
+    ]
+  },
+  {
+    category: "SOCIAL CONNECTION", icon: "◈",
+    text: "How connected do you feel to people around you?",
+    sub: "Loneliness has the same mortality risk as smoking 15 cigarettes a day. Strong social connection is one of the most consistent predictors of longevity across every Blue Zone population.",
+    options: [
+      { label:"Very connected — rich relationships", emoji:"💚", score:0 },
+      { label:"Fairly connected — solid friendships", emoji:"🤝", score:2 },
+      { label:"Somewhat — a few close relationships", emoji:"👥", score:4 },
+      { label:"Often lonely — limited social contact", emoji:"😔", score:7 },
+      { label:"Very isolated — rarely feel connected", emoji:"🚨", score:10 }
+    ]
+  },
+  {
+    category: "BODY COMPOSITION", icon: "◉",
+    text: "How would you describe your current body composition and energy?",
+    sub: "Visceral fat — stored around your organs — is the primary driver of metabolic disease and accelerated biological aging, independent of what the scale shows.",
+    options: [
+      { label:"Healthy weight, good energy all day", emoji:"✅", score:0 },
+      { label:"Slightly above ideal but energetic", emoji:"🙂", score:2 },
+      { label:"Noticeably overweight, some fatigue", emoji:"😐", score:5 },
+      { label:"Significantly overweight, low energy", emoji:"😓", score:7 },
+      { label:"Obese, chronic fatigue, metabolic symptoms", emoji:"🚨", score:10 }
+    ]
+  }
+];
+
+var results = [
+  {
+    tier: "OPTIMAL",
+    label: "Biological Optimizer",
+    color: "#00D47E",
+    glow: "rgba(0,212,126,0.25)",
+    rate: "0.7× — Aging slower than average",
+    tagline: "Your lifestyle is working with your biology, not against it.",
+    desc: "Your daily habits are actively supporting your longevity. Your telomeres are likely longer than average, your inflammatory markers are likely low, and your biological age may be younger than your chronological age. You're in the top tier of lifestyle-driven longevity.",
+    steps: [
+      { icon:"🧬", num:"01", title:"Get Your Biological Age Tested", detail:"You've earned the data. Order an epigenetic age test (TruDiagnostic or InsideTracker) to confirm your biological age vs. chronological age. Use it as your baseline — then optimize from there." },
+      { icon:"💚", num:"02", title:"Add Zone 2 Cardio If You Haven't", detail:"If your exercise is primarily strength-based, add 150 min/week of low-intensity Zone 2 cardio at conversational pace. This is the single highest-leverage longevity addition for people already fit." },
+      { icon:"📊", num:"03", title:"Track Your HRV as an Early Warning System", detail:"At this level, your biggest risk is complacency. A Whoop or Oura Ring tracks HRV daily. If it trends down, something in your life is stressing your system before you consciously feel it." }
+    ]
+  },
+  {
+    tier: "MODERATE",
+    label: "Aging at Standard Rate",
+    color: "#FFD166",
+    glow: "rgba(255,209,102,0.25)",
+    rate: "1.0× — Aging at average rate",
+    tagline: "You have solid foundations — but a few key habits are costing you years.",
+    desc: "Your lifestyle has genuine strengths, but 2–3 specific habits are creating biological aging faster than necessary. Most people in this zone can subtract 5–8 biological years within 12 months of focused, targeted intervention.",
+    steps: [
+      { icon:"🌙", num:"01", title:"Fix Your Sleep First — Everything Else Depends On It", detail:"Set a consistent wake time 7 days a week. No screens 60 minutes before bed. Keep your bedroom at 65–68°F. These three changes alone produce measurable biological age improvements within 30 days." },
+      { icon:"💪", num:"02", title:"Add Resistance Training — Minimum Twice Weekly", detail:"Muscle secretes myokines — anti-inflammatory molecules that protect every organ. Two 30-minute sessions weekly is enough to trigger measurable biological benefits. Prioritize compound movements." },
+      { icon:"🥦", num:"03", title:"Eliminate Your Most Inflammatory Daily Habit", detail:"Identify the single food or drink you consume daily that is most processed or highest in added sugar. Remove it for 30 days. Measure the difference in energy and body composition." }
+    ]
+  },
+  {
+    tier: "ELEVATED",
+    label: "Accelerated Aging Risk",
+    color: "#FF9A3C",
+    glow: "rgba(255,154,60,0.25)",
+    rate: "1.4× — Aging faster than average",
+    tagline: "Your current lifestyle is aging your cells faster than your birthday suggests.",
+    desc: "Multiple lifestyle factors are working against your biology simultaneously. Your biological age may already be 5–10 years older than your birth certificate. The critical insight: biological aging is not linear — small compounding changes produce exponential results.",
+    steps: [
+      { icon:"🚶", num:"01", title:"Start Walking — 7,000 Steps Every Day", detail:"7,000 steps/day reduces all-cause mortality by 50–70% vs. sedentary living. This is the lowest-barrier, highest-ROI longevity intervention that exists. Track it and make it non-negotiable." },
+      { icon:"🍳", num:"02", title:"Cook One Meal From Whole Foods Daily", detail:"For the next 30 days, cook at least one meal per day from whole ingredients. Gradually crowd out ultra-processed food. You don't need a perfect diet — you need to move the percentage." },
+      { icon:"🧘", num:"03", title:"Address Chronic Stress — It Is a Medical Priority", detail:"Begin 10 minutes of diaphragmatic breathing daily. This is clinically proven to shift the nervous system out of chronic fight-or-flight and reduce inflammatory markers within 4 weeks." }
+    ]
+  },
+  {
+    tier: "HIGH RISK",
+    label: "High Biological Aging Risk",
+    color: "#FF4D6D",
+    glow: "rgba(255,77,109,0.30)",
+    rate: "1.8×+ — Aging significantly faster",
+    tagline: "Your cells are aging significantly faster than they should be. This is urgent — and reversible.",
+    desc: "Multiple high-impact risk factors are compounding in your biology right now. Based on your inputs, your biological age may be 10–15+ years older than your chronological age. Biological aging is one of the most reversible processes in human health when lifestyle changes are applied consistently.",
+    steps: [
+      { icon:"🏥", num:"01", title:"Book a Doctor's Appointment This Week", detail:"Ask for a comprehensive panel including fasting insulin, hs-CRP, ApoB, and HbA1c — not just standard cholesterol. These are the markers that reveal hidden biological aging. You need your baseline." },
+      { icon:"🔗", num:"02", title:"Apply the One-Habit Rule Starting Today", detail:"Do not attempt to change everything at once — research shows this leads to collapse within 2 weeks. Pick your single highest-impact habit to change and apply one measurable change for 21 days straight." },
+      { icon:"⚡", num:"03", title:"Remove One Accelerant Immediately", detail:"You have at least one habit causing active cellular damage — smoking, excessive alcohol, severe sleep deprivation, or complete inactivity. Choose the highest biological cost one and eliminate it this week." }
+    ]
+  }
+];
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+var currentQ = 0;
+var selectedIdx = -1;
+var scores = [];
+var calcMessages = [
+  "Analyzing sleep patterns…",
+  "Calculating inflammation markers…",
+  "Assessing cellular stress load…",
+  "Mapping biological age trajectory…",
+  "Generating your personal protocol…"
+];
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function show(id) {
+  var screens = document.querySelectorAll('.screen');
+  for (var i = 0; i < screens.length; i++) screens[i].classList.remove('active');
+  var el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+function totalScore() {
+  var sum = 0;
+  for (var i = 0; i < scores.length; i++) sum += scores[i];
+  return sum;
+}
+
+function getResult(score) {
+  if (score <= 10) return results[0];
+  if (score <= 25) return results[1];
+  if (score <= 45) return results[2];
+  return results[3];
+}
+
+function pipColor(score) {
+  if (score >= 7) return '#FF4D6D';
+  if (score >= 4) return '#FF9A3C';
+  if (score >= 2) return '#FFD166';
+  return '#00D47E';
+}
+
+// ─── QUIZ FLOW ────────────────────────────────────────────────────────────────
+function startQuiz() {
+  currentQ = 0;
+  selectedIdx = -1;
+  scores = [];
+  show('screen-quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  var q = questions[currentQ];
+
+  document.getElementById('q-category').textContent = q.category;
+  document.getElementById('q-counter').textContent = (currentQ + 1) + ' / ' + questions.length;
+  document.getElementById('progress-fill').style.width = (currentQ / questions.length * 100) + '%';
+  document.getElementById('q-icon').textContent = q.icon;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('q-sub').textContent = q.sub;
+
+  var btn = document.getElementById('btn-next');
+  btn.disabled = true;
+  btn.textContent = currentQ === questions.length - 1 ? 'Calculate My Score →' : 'Next →';
+
+  var list = document.getElementById('options-list');
+  list.innerHTML = '';
+  selectedIdx = -1;
+
+  for (var i = 0; i < q.options.length; i++) {
+    (function(idx) {
+      var opt = q.options[idx];
+      var btn2 = document.createElement('button');
+      btn2.className = 'opt';
+      btn2.innerHTML =
+        '<span class="opt-emoji">' + opt.emoji + '</span>' +
+        '<span>' + opt.label + '</span>';
+      btn2.onclick = function() { selectOption(idx); };
+      list.appendChild(btn2);
+    })(i);
+  }
+}
+
+function selectOption(idx) {
+  selectedIdx = idx;
+  var opts = document.querySelectorAll('.opt');
+  for (var i = 0; i < opts.length; i++) {
+    opts[i].classList.remove('chosen');
+    // remove any check marks
+    var chk = opts[i].querySelector('.opt-check');
+    if (chk) chk.remove();
+  }
+  opts[idx].classList.add('chosen');
+  var check = document.createElement('span');
+  check.className = 'opt-check';
+  check.textContent = '✓';
+  opts[idx].appendChild(check);
+  document.getElementById('btn-next').disabled = false;
+}
+
+function nextQuestion() {
+  if (selectedIdx < 0) return;
+  scores.push(questions[currentQ].options[selectedIdx].score);
+
+  if (currentQ + 1 >= questions.length) {
+    showCalculating();
+  } else {
+    currentQ++;
+    selectedIdx = -1;
+    renderQuestion();
+    // scroll top smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+// ─── CALCULATING ─────────────────────────────────────────────────────────────
+function showCalculating() {
+  show('screen-calc');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  var step = 0;
+  var iv = setInterval(function() {
+    document.getElementById('calc-msg').textContent = calcMessages[step] || '';
+    var dot = document.getElementById('dot-' + step);
+    if (dot) dot.classList.add('lit');
+    step++;
+    if (step >= calcMessages.length) {
+      clearInterval(iv);
+      setTimeout(showResult, 600);
+    }
+  }, 520);
+}
+
+// ─── RESULT ───────────────────────────────────────────────────────────────────
+function showResult() {
+  var score = totalScore();
+  var r = getResult(score);
+
+  // color vars
+  document.documentElement.style.setProperty('--result-color', r.color);
+  document.documentElement.style.setProperty('--result-glow', r.glow);
+
+  // badge
+  var badge = document.getElementById('result-badge');
+  badge.textContent = 'RISK TIER: ' + r.tier;
+  badge.style.color = r.color;
+  badge.style.borderColor = r.color;
+
+  // ring
+  document.getElementById('score-ring').style.borderColor = r.color;
+  document.getElementById('score-ring').style.boxShadow = '0 0 40px ' + r.glow;
+  document.getElementById('score-num').textContent = score;
+  document.getElementById('score-num').style.color = r.color;
+
+  // text
+  document.getElementById('result-title').textContent = r.label;
+  document.getElementById('result-rate').textContent = r.rate;
+  document.getElementById('result-rate').style.color = r.color;
+  document.getElementById('result-tagline').textContent = r.tagline;
+  document.getElementById('result-desc').textContent = r.desc;
+
+  // bar — animate after paint
+  var pct = Math.min((score / 70) * 100, 100);
+  var barFill = document.getElementById('score-bar-fill');
+  barFill.style.width = '0%';
+  setTimeout(function() { barFill.style.width = pct + '%'; }, 80);
+
+  // steps
+  var sc = document.getElementById('steps-container');
+  sc.innerHTML = '';
+  for (var i = 0; i < r.steps.length; i++) {
+    var s = r.steps[i];
+    var div = document.createElement('div');
+    div.className = 'step-card';
+    div.innerHTML =
+      '<div class="step-top">' +
+        '<span class="step-icon">' + s.icon + '</span>' +
+        '<div class="step-body">' +
+          '<div class="step-meta">' +
+            '<span class="step-num" style="color:' + r.color + '">' + s.num + '</span>' +
+            '<span class="step-title">' + s.title + '</span>' +
+          '</div>' +
+          '<div class="step-detail">' + s.detail + '</div>' +
+        '</div>' +
+      '</div>';
+    sc.appendChild(div);
+  }
+
+  // breakdown
+  var bg = document.getElementById('breakdown-grid');
+  bg.innerHTML = '';
+  for (var j = 0; j < questions.length; j++) {
+    var qScore = scores[j] || 0;
+    var row = document.createElement('div');
+    row.className = 'breakdown-row';
+    var pipCount = Math.min(Math.ceil(qScore / 2) + 1, 5);
+    var pips = '';
+    for (var p = 0; p < 5; p++) {
+      var filled = p < pipCount;
+      var pc = filled ? pipColor(qScore) : 'rgba(232,226,214,0.08)';
+      pips += '<div class="pip" style="background:' + pc + '"></div>';
+    }
+    row.innerHTML =
+      '<span>' + questions[j].category + '</span>' +
+      '<div class="breakdown-pip">' + pips + '</div>';
+    bg.appendChild(row);
+  }
+
+  show('screen-result');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function restartQuiz() {
+  document.documentElement.style.removeProperty('--result-color');
+  document.documentElement.style.removeProperty('--result-glow');
+  // reset dots
+  for (var i = 0; i < 5; i++) {
+    var d = document.getElementById('dot-' + i);
+    if (d) d.classList.remove('lit');
+  }
+  startQuiz();
+}
+</script>
+</body>
+</html>
